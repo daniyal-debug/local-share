@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LocalShare — every device gets a plate</title>
+<meta name="description" content="Every device gets a permanent plate like ABC-123. Type someone's plate and send them text or files across your network. No signup, nothing in the cloud.">
+<meta name="theme-color" content="#0b0d12">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366f1'/%3E%3Crect x='6' y='11' width='20' height='10' rx='2' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M10 16h2m3 0h2m3 0h2' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/styles.css">
+<script>
+  // Resolve the theme before first paint, otherwise the page renders dark and
+  // then transitions to light in front of the user.
+  (function () {
+    var fromUrl = new URLSearchParams(location.search).get('theme');
+    var stored = null;
+    try { stored = localStorage.getItem('ls.theme'); } catch (e) { /* private mode */ }
+    var theme = fromUrl === 'light' || fromUrl === 'dark' ? fromUrl : stored;
+    if (theme !== 'light' && theme !== 'dark') {
+      theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    document.documentElement.dataset.theme = theme;
+  })();
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="/">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.9"/><path d="M7.5 12h1.2m2.7 0h1.2m2.7 0h1.2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+    </span>
+    <span class="brand-text">LocalShare</span>
+  </a>
+
+  <nav class="topnav">
+    <a href="#how">How it works</a>
+    <a href="#devices">Devices</a>
+    <a href="#faq">FAQ</a>
+  </nav>
+
+  <div class="topbar-actions">
+    <button class="ghost-btn" id="deviceBtn" type="button" title="Rename this device">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span id="deviceName">This device</span>
+    </button>
+    <button class="icon-btn" id="themeBtn" type="button" title="Switch theme" aria-label="Switch theme">
+      <svg class="ico-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <svg class="ico-moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Every device gets a plate</h1>
+    <p class="hero-sub">
+      This browser now has a permanent plate, the way a car has a number plate. Anyone on your
+      network who types it can send you text or files — and you decide whether to accept.
+    </p>
+  </section>
+
+  <section class="top-grid">
+    <article class="card plate-card">
+      <header class="card-head">
+        <h2>Your plate</h2>
+        <span class="status-line">
+          <span class="dot" id="statusDot" data-state="connecting"></span>
+          <span class="hint" id="networkLine">Connecting</span>
+        </span>
+      </header>
+
+      <div class="plate" id="myPlate" title="Your permanent plate">
+        <span class="plate-screws" aria-hidden="true"></span>
+        <span class="plate-text" id="myPlateText">---&#8203;-&#8203;---</span>
+        <span class="plate-screws" aria-hidden="true"></span>
+      </div>
+
+      <p class="hint plate-note">Read it out, or let someone scan the code to open this page.</p>
+
+      <div class="plate-actions">
+        <button class="primary-btn" id="copyPlateBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M15 6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Copy plate
+        </button>
+        <button class="ghost-btn" id="qrBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M14 14h3v3h-3zM19 19h1.5M14 20.5h1.5M19.5 14h1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          QR code
+        </button>
+        <button class="ghost-btn" id="rotateBtn" type="button" title="Issue yourself a new plate">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M20 4v4h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          New plate
+        </button>
+      </div>
+    </article>
+
+    <article class="card send-card">
+      <header class="card-head">
+        <h2>Send to a plate</h2>
+        <span class="hint" id="sendHint">Type a plate</span>
+      </header>
+
+      <div class="plate-entry">
+        <input id="plateInput" class="plate-field" placeholder="ABC-123" maxlength="7"
+               autocomplete="off" autocapitalize="characters" spellcheck="false"
+               inputmode="text" aria-label="Recipient plate">
+        <button class="ghost-btn" id="everyoneBtn" type="button" title="Send to every device on this network">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="3.2" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16 6.2a3.2 3.2 0 0 1 0 5.6M18.5 19.5a5.6 5.6 0 0 0-2.2-4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          Everyone
+        </button>
+      </div>
+
+      <div class="recipient" id="recipient" hidden>
+        <span class="recipient-icon" id="recipientIcon"></span>
+        <div class="recipient-body">
+          <div class="recipient-name" id="recipientName"></div>
+          <div class="hint" id="recipientMeta"></div>
+        </div>
+        <button class="icon-btn" id="clearRecipientBtn" type="button" aria-label="Clear recipient">
+          <svg viewBox="0 0 24 24" fill="none"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="compose" id="compose">
+        <div class="tabs compose-tabs" role="tablist">
+          <button class="tab is-active" data-compose="text" role="tab" type="button">Text</button>
+          <button class="tab" data-compose="files" role="tab" type="button">Files</button>
+        </div>
+
+        <div data-pane="text">
+          <textarea id="textInput" placeholder="Paste a link, a snippet, an address, a one-time code…" spellcheck="false"></textarea>
+          <div class="card-foot">
+            <span class="hint" id="textCount">0 characters</span>
+            <button class="primary-btn" id="sendTextBtn" type="button" disabled>Send text</button>
+          </div>
+        </div>
+
+        <div data-pane="files" hidden>
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose files to send">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v2.5A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <p><strong>Drop files here</strong></p>
+            <p class="hint" id="fileHint">or click to browse — you can also paste from the clipboard</p>
+            <input type="file" id="fileInput" multiple hidden>
+          </div>
+          <div class="progress" id="progress" hidden>
+            <div class="progress-bar"><span id="progressFill"></span></div>
+            <span class="hint" id="progressText">Uploading…</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="board">
+    <header class="board-head">
+      <div class="tabs" role="tablist">
+        <button class="tab is-active" data-view="inbox" role="tab" type="button">
+          Inbox <span class="badge" id="inboxBadge" hidden>0</span>
+        </button>
+        <button class="tab" data-view="sent" role="tab" type="button">Sent</button>
+      </div>
+      <div class="board-actions">
+        <button class="ghost-btn" id="downloadAllBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v10m0 0-4-4m4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v1.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Download all
+        </button>
+        <button class="ghost-btn danger" id="clearBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4.5 7h15M9.5 7V5.5A1.5 1.5 0 0 1 11 4h2a1.5 1.5 0 0 1 1.5 1.5V7M6.5 7l.8 11.2A2 2 0 0 0 9.3 20h5.4a2 2 0 0 0 2-1.8L17.5 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Clear
+        </button>
+      </div>
+    </header>
+
+    <div id="requestList" class="request-list"></div>
+    <div id="itemList" class="item-list"></div>
+
+    <div class="empty" id="emptyState">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M7.5 12h1.2m2.7 0h1.2m2.7 0h1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <p><strong id="emptyTitle">Nothing in your inbox</strong></p>
+      <p class="hint" id="emptyBody">Give someone your plate and whatever they send lands here.</p>
+    </div>
+  </section>
+
+  <section class="info" id="devices">
+    <h2>Devices</h2>
+    <div class="device-columns">
+      <div class="device-col">
+        <h3>On your network now</h3>
+        <div id="nearbyList" class="chip-list"></div>
+      </div>
+      <div class="device-col">
+        <h3>Saved</h3>
+        <div id="savedList" class="chip-list"></div>
+      </div>
+      <div class="device-col">
+        <h3>Blocked</h3>
+        <div id="blockedList" class="chip-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="info" id="how">
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li>
+        <span class="step-n">1</span>
+        <h3>Your browser gets a plate</h3>
+        <p>Something like <code>KRT-482</code>, kept for this browser and remembered across restarts. Letters that look alike — I, L, O and U — are never used, so a plate is safe to read aloud.</p>
+      </li>
+      <li>
+        <span class="step-n">2</span>
+        <h3>Type someone else's plate</h3>
+        <p>The name of the device appears as soon as the plate resolves. Plates only work between devices on the same network, so nobody outside can address you.</p>
+      </li>
+      <li>
+        <span class="step-n">3</span>
+        <h3>They accept, then it flows</h3>
+        <p>A first contact arrives as a request. Once accepted — and optionally saved — everything else from that plate arrives straight away.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="info" id="faq">
+    <h2>Questions</h2>
+    <div class="faq">
+      <details>
+        <summary>Can anyone who guesses my plate send me things?</summary>
+        <p>They have to be on your network, they only get five waiting items before being cut off, and their first contact sits as a request until you accept it. If someone is a nuisance, decline and block them, or issue yourself a new plate.</p>
+      </details>
+      <details>
+        <summary>Does my plate ever change?</summary>
+        <p>Only if you press <strong>New plate</strong>. It is stored on the server and survives restarts, and it is tied to this browser on this device — a different browser gets its own plate.</p>
+      </details>
+      <details>
+        <summary>What does "the same network" mean exactly?</summary>
+        <p>Self-hosted on a LAN, devices sharing a <code>/24</code> subnet count as together. Behind a reverse proxy, devices arriving from the same public address count as together. Anyone else simply cannot see that your plate exists.</p>
+      </details>
+      <details>
+        <summary>Where do my files go?</summary>
+        <p>To the machine running this server, under a random filename, and they are deleted when the countdown ends, when either side deletes them, or when a request is declined. Nothing is sent to an external service.</p>
+      </details>
+      <details>
+        <summary>Is it encrypted?</summary>
+        <p>Traffic is plain HTTP unless you put it behind a reverse proxy with TLS. On a home or office network that is usually fine; on a shared network, terminate HTTPS in front of it.</p>
+      </details>
+      <details>
+        <summary>What are the limits?</summary>
+        <p id="faqLimits">Files up to 512 MB each, 20 at a time, 80 items per device.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p>LocalShare — plates for the devices on one network.</p>
+  <p class="hint" id="footMeta"></p>
+</footer>
+
+<div class="modal" id="qrModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+    <button class="modal-close" data-close type="button" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <h2 id="qrTitle">Open LocalShare on another device</h2>
+    <p class="hint">Scan to open this page, then type your plate on that device to send you something.</p>
+    <div class="qr" id="qrHolder"></div>
+    <div class="copy-row">
+      <code id="joinUrl">—</code>
+      <button class="ghost-btn" id="copyUrlBtn" type="button">Copy</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="/app.js" type="module"></script>
+</body>
+</html>
