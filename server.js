@@ -279,6 +279,9 @@ app.get('/api/me', requireDevice, async (req, res) => {
     ...stateFor(req.device),
     joinUrl,
     yourIp: clientIp(req),
+    // Tells the page to stop pretending it works: on serverless there is no
+    // shared registry and no socket, so two devices cannot find each other.
+    ephemeral: config.serverless,
     plateShape: PLATE_SHAPE,
     plateLetters: PLATE_LETTERS,
     limits: {
@@ -631,14 +634,18 @@ heartbeat.unref?.();
 const deviceSweep = setInterval(() => registry.sweep(), 60 * 60 * 1000);
 deviceSweep.unref?.();
 
-server.listen(config.port, config.host, () => {
-  const lan = lanAddress();
-  console.log('LocalShare is running');
-  console.log(`  this device   http://localhost:${config.port}`);
-  if (lan) console.log(`  same Wi-Fi    http://${lan}:${config.port}`);
-  console.log(`  plates like   ${PLATE_SHAPE}`);
-  console.log(`  items expire  ${Math.round(config.itemTtlMs / 60000)} min`);
-});
+// A serverless invocation must not bind a port; the platform calls the exported
+// app directly. Everything above still loads so routes resolve and pages render.
+if (!config.serverless) {
+  server.listen(config.port, config.host, () => {
+    const lan = lanAddress();
+    console.log('LocalShare is running');
+    console.log(`  this device   http://localhost:${config.port}`);
+    if (lan) console.log(`  same Wi-Fi    http://${lan}:${config.port}`);
+    console.log(`  plates like   ${PLATE_SHAPE}`);
+    console.log(`  items expire  ${Math.round(config.itemTtlMs / 60000)} min`);
+  });
+}
 
 function shutdown() {
   clearInterval(heartbeat);
@@ -649,3 +656,5 @@ function shutdown() {
 }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+
+export default app;

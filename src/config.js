@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -8,18 +9,33 @@ function int(value, fallback) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+/**
+ * Serverless hosts (Vercel, Lambda, Netlify) give each invocation a read-only
+ * project directory and no shared memory. LocalShare needs a live WebSocket and
+ * one shared registry, so it cannot work properly there — see README. What the
+ * flag does is keep the process from crashing on boot: writes go to /tmp, and
+ * nothing tries to bind a port.
+ */
+const serverless = Boolean(
+  process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY
+);
+
+const writableRoot = serverless ? os.tmpdir() : rootDir;
+
 export const config = {
+  serverless,
   rootDir,
   publicDir: path.join(rootDir, 'public'),
-  uploadDir: process.env.UPLOAD_DIR || path.join(rootDir, 'uploads'),
-  dataDir: process.env.DATA_DIR || path.join(rootDir, 'data'),
+  uploadDir: process.env.UPLOAD_DIR || path.join(writableRoot, serverless ? 'localshare-uploads' : 'uploads'),
+  dataDir: process.env.DATA_DIR || path.join(writableRoot, serverless ? 'localshare-data' : 'data'),
 
   port: int(process.env.PORT, 3000),
   host: process.env.HOST || '0.0.0.0',
 
   // Only enable behind a reverse proxy you control, otherwise clients can spoof
-  // X-Forwarded-For and place themselves on another network.
-  trustProxy: process.env.TRUST_PROXY === '1',
+  // X-Forwarded-For and place themselves on another network. Serverless hosts
+  // always front the app with their own proxy, so it is correct there.
+  trustProxy: process.env.TRUST_PROXY === '1' || serverless,
 
   // How long a transfer survives before it is swept, blob and all.
   itemTtlMs: int(process.env.ITEM_TTL_MINUTES, 30) * 60 * 1000,

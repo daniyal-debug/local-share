@@ -8,6 +8,7 @@ const el = {
   themeBtn: $('themeBtn'),
   footMeta: $('footMeta'),
   faqLimits: $('faqLimits'),
+  ephemeralNotice: $('ephemeralNotice'),
 
   myPlateText: $('myPlateText'),
   copyPlateBtn: $('copyPlateBtn'),
@@ -683,6 +684,7 @@ async function loadSession() {
   try {
     const session = await api('/api/me');
     state.limits = session.limits;
+    el.ephemeralNotice.hidden = !session.ephemeral;
     applyState(session);
 
     const minutes = Math.round(session.limits.ttlMs / 60000);

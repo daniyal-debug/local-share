@@ -106,6 +106,24 @@ A permanent address is guessable, so:
 set that header and appear to be on another network, so leave it off when the process is exposed
 directly.
 
+## Deploying
+
+LocalShare needs **one long-lived process**: a shared in-memory registry so every device sees the
+same plates, a WebSocket for live updates, and a writable disk for uploads.
+
+**Hosts that work as-is** — Render, Railway, Fly.io, a VPS, a Raspberry Pi on your own Wi-Fi. Set
+`TRUST_PROXY=1` if something proxies in front of it, and give `DATA_DIR` a persistent disk so plates
+survive restarts.
+
+**Serverless hosts do not work** — Vercel, Netlify, Lambda. Each request can hit a different
+instance with its own memory, so device A's plate is invisible to device B; there is no WebSocket,
+so nothing syncs; and the project directory is read-only.
+
+The repo still contains `vercel.json` and `api/index.js` so a Vercel deployment *boots* instead of
+returning `FUNCTION_INVOCATION_FAILED`: writes are redirected to `/tmp` and nothing binds a port.
+The page loads and a plate is issued, but **sharing between devices will not work**, and the page
+says so in a banner. Treat it as a preview of the interface, not a working install.
+
 ## What "the same network" means
 
 | Situation | Grouping |

@@ -185,6 +185,22 @@ main {
   gap: clamp(1.75rem, 4vw, 2.75rem);
 }
 
+.notice {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--warn) 50%, var(--line));
+  background: color-mix(in srgb, var(--warn) 9%, var(--surface));
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.notice svg { width: 1.3rem; height: 1.3rem; color: var(--warn); margin-top: 0.1rem; }
+
+.notice strong { display: block; margin-bottom: 0.15rem; }
+
 .hero { text-align: center; display: grid; gap: 1rem; justify-items: center; }
 
 .hero h1 {
